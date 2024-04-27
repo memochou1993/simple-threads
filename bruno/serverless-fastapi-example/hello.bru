@@ -1,0 +1,15 @@
+meta {
+  name: hello
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{invoke-url}}/v1/hello
+  body: none
+  auth: none
+}
+
+headers {
+  x-api-key: {{x-api-key}}
+}

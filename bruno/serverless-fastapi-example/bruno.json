@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "cdk-python-example",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

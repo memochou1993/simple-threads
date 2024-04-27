@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "cdk-python-example"
+version = "0.1.0"
+description = ""
+authors = ["Memo Chou <memochou1993@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+aws-cdk-lib = "^2.139.0"
+python-dotenv = "^1.0.1"
+ruff = "^0.4.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.1.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

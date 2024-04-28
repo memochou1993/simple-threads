@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "cdk-python-example"
+name = "simple-threads"
 version = "0.1.0"
 description = ""
 authors = ["Memo Chou <memochou1993@gmail.com>"]

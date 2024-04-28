@@ -4,7 +4,7 @@ from aws_cdk import Duration, Size, Stack, aws_apigateway, aws_ec2, aws_iam, aws
 from constructs import Construct
 
 
-class CdkPythonExampleStack(Stack):
+class SimpleThreadsStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
@@ -24,8 +24,8 @@ class CdkPythonExampleStack(Stack):
     def create_lambda_function(self):
         lambda_role = aws_iam.Role(
             self,
-            "CdkPythonExampleLambdaRole",
-            description="CDK Python Example Lambda Role",
+            "SimpleThreadsLambdaRole",
+            description="Simple Threads Lambda Role",
             assumed_by=aws_iam.CompositePrincipal(
                 aws_iam.ServicePrincipal("lambda.amazonaws.com"),
             ),
@@ -33,22 +33,22 @@ class CdkPythonExampleStack(Stack):
         lambda_role.add_managed_policy(
             aws_iam.ManagedPolicy.from_managed_policy_arn(
                 self,
-                "CdkPythonExampleAWSLambdaBasicExecutionRolePolicy",
+                "SimpleThreadsAWSLambdaBasicExecutionRolePolicy",
                 "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
             )
         )
         lambda_role.add_managed_policy(
             aws_iam.ManagedPolicy.from_managed_policy_arn(
                 self,
-                "CdkPythonExampleAWSLambdaVPCAccessExecutionRolePolicy",
+                "SimpleThreadsAWSLambdaVPCAccessExecutionRolePolicy",
                 "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
             )
         )
 
         lambda_function = aws_lambda.Function(
             self,
-            "CdkPythonExampleLambdaFunction",
-            description="CDK Python Example Lambda Function",
+            "SimpleThreadsLambdaFunction",
+            description="Simple Threads Lambda Function",
             runtime=aws_lambda.Runtime.PYTHON_3_11,
             code=aws_lambda.Code.from_asset("lambda"),
             handler="hello.handler",
@@ -66,14 +66,14 @@ class CdkPythonExampleStack(Stack):
     def create_api_gateway(self):
         log_group = aws_logs.LogGroup(
             self,
-            "CdkPythonExampleLogGroup",
+            "SimpleThreadsLogGroup",
             retention=aws_logs.RetentionDays.ONE_MONTH,
         )
 
         api_gateway = aws_apigateway.RestApi(
             self,
-            "CdkPythonExampleApiGateway",
-            description="CDK Python Example Api Gateway",
+            "SimpleThreadsApiGateway",
+            description="Simple Threads Api Gateway",
             min_compression_size=Size.kibibytes(1),
             endpoint_types=[aws_apigateway.EndpointType.REGIONAL],
             cloud_watch_role=True,
@@ -96,8 +96,8 @@ class CdkPythonExampleStack(Stack):
         )
 
         usage_plan = api_gateway.add_usage_plan(
-            "CdkPythonExampleUsagePlan",
-            description="CDK Python Example Usage Plan",
+            "SimpleThreadsUsagePlan",
+            description="Simple Threads Usage Plan",
             throttle=aws_apigateway.ThrottleSettings(
                 burst_limit=50,
                 rate_limit=100,
@@ -106,8 +106,8 @@ class CdkPythonExampleStack(Stack):
 
         api_key = aws_apigateway.ApiKey(
             self,
-            "CdkPythonExampleApiKey",
-            description="CDK Python Example Api Key",
+            "SimpleThreadsApiKey",
+            description="Simple Threads Api Key",
         )
 
         usage_plan.add_api_key(api_key)

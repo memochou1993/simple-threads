@@ -140,23 +140,25 @@ class SimpleThreadsStack(Stack):
 
         usage_plan.add_api_key(api_key)
 
-        v1_resource = api_gateway.root.add_resource("{proxy+}")
-        v1_resource.add_cors_preflight(
+        lambda_integration = aws_apigateway.LambdaIntegration(self.lambda_function)
+
+        api_gateway.root.add_method("GET", lambda_integration)
+        api_gateway.root.add_resource("docs").add_method("GET", lambda_integration)
+        api_gateway.root.add_resource("openapi.json").add_method("GET", lambda_integration)
+
+        proxy_resource = api_gateway.root.add_resource("{proxy+}")
+        proxy_resource.add_cors_preflight(
             allow_origins=aws_apigateway.Cors.ALL_ORIGINS,
             allow_methods=aws_apigateway.Cors.ALL_METHODS,
             max_age=Duration.hours(1),
         )
-        v1_method = v1_resource.add_method(
-            "ANY",
-            aws_apigateway.LambdaIntegration(self.lambda_function),
-            api_key_required=True,
-        )
+        proxy_method = proxy_resource.add_method("ANY", lambda_integration, api_key_required=True)
 
         usage_plan.add_api_stage(
             stage=api_gateway.deployment_stage,
             throttle=[
                 aws_apigateway.ThrottlingPerMethod(
-                    method=v1_method,
+                    method=proxy_method,
                     throttle=aws_apigateway.ThrottleSettings(
                         burst_limit=50,
                         rate_limit=100,

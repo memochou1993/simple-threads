@@ -1,15 +1,22 @@
 meta {
-  name: list-items
+  name: create-item
   type: http
-  seq: 1
+  seq: 2
 }
 
-get {
+post {
   url: {{invoke-url}}/api/items
-  body: none
+  body: json
   auth: none
 }
 
 headers {
   x-api-key: {{x-api-key}}
+}
+
+body:json {
+  {
+    "name": "Test",
+    "price": 100
+  }
 }

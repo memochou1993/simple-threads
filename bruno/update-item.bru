@@ -1,15 +1,22 @@
 meta {
-  name: get-item
+  name: update-item
   type: http
-  seq: 3
+  seq: 4
 }
 
-get {
+put {
   url: {{invoke-url}}/api/items/1
-  body: none
+  body: json
   auth: none
 }
 
 headers {
   x-api-key: {{x-api-key}}
+}
+
+body:json {
+  {
+    "name": "Test",
+    "price": 200
+  }
 }

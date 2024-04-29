@@ -1,0 +1,15 @@
+meta {
+  name: get-item
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{invoke-url}}/v1/items/1
+  body: none
+  auth: none
+}
+
+headers {
+  x-api-key: {{x-api-key}}
+}

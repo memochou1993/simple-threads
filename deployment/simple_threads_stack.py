@@ -1,6 +1,6 @@
 import os
 
-from aws_cdk import Duration, Size, Stack, aws_apigateway, aws_ec2, aws_iam, aws_lambda, aws_logs
+from aws_cdk import BundlingOptions, Duration, Size, Stack, aws_apigateway, aws_ec2, aws_iam, aws_lambda, aws_logs
 from constructs import Construct
 
 
@@ -45,19 +45,45 @@ class SimpleThreadsStack(Stack):
             )
         )
 
+        layer = aws_lambda.LayerVersion(
+            self,
+            "SimpleThreadsLambdaLayer",
+            description="Simple Threads Lambda Layer",
+            code=aws_lambda.Code.from_asset(
+                "deployment/layer",
+                bundling=BundlingOptions(
+                    image=aws_lambda.Runtime.PYTHON_3_12.bundling_image,
+                    command=[
+                        "bash",
+                        "-c",
+                        "pip install --no-cache -r requirements.txt -t /asset-output/python && cp -au . /asset-output/python",
+                    ],
+                ),
+            ),
+            compatible_architectures=[
+                aws_lambda.Architecture.ARM_64,
+            ],
+            compatible_runtimes=[
+                aws_lambda.Runtime.PYTHON_3_12,
+            ],
+        )
+
         lambda_function = aws_lambda.Function(
             self,
             "SimpleThreadsLambdaFunction",
             description="Simple Threads Lambda Function",
-            runtime=aws_lambda.Runtime.PYTHON_3_11,
-            code=aws_lambda.Code.from_asset("lambda"),
-            handler="hello.handler",
+            runtime=aws_lambda.Runtime.PYTHON_3_12,
+            code=aws_lambda.Code.from_asset("app"),
+            handler="main.handler",
             architecture=aws_lambda.Architecture.ARM_64,
             memory_size=512,
             timeout=Duration.seconds(30),
             vpc=self.vpc,
             vpc_subnets=aws_ec2.SubnetSelection(subnet_type=aws_ec2.SubnetType.PRIVATE_WITH_EGRESS, one_per_az=True),
             role=lambda_role,
+            layers=[
+                layer,
+            ],
             environment={},
         )
 
@@ -75,7 +101,9 @@ class SimpleThreadsStack(Stack):
             "SimpleThreadsApiGateway",
             description="Simple Threads Api Gateway",
             min_compression_size=Size.kibibytes(1),
-            endpoint_types=[aws_apigateway.EndpointType.REGIONAL],
+            endpoint_types=[
+                aws_apigateway.EndpointType.REGIONAL,
+            ],
             cloud_watch_role=True,
             deploy_options=aws_apigateway.StageOptions(
                 stage_name="production",
@@ -112,24 +140,13 @@ class SimpleThreadsStack(Stack):
 
         usage_plan.add_api_key(api_key)
 
-        v1_resource = api_gateway.root.add_resource("v1")
+        v1_resource = api_gateway.root.add_resource("{proxy+}")
         v1_resource.add_cors_preflight(
             allow_origins=aws_apigateway.Cors.ALL_ORIGINS,
             allow_methods=aws_apigateway.Cors.ALL_METHODS,
             max_age=Duration.hours(1),
         )
         v1_method = v1_resource.add_method(
-            "GET",
-            aws_apigateway.LambdaIntegration(self.lambda_function),
-            api_key_required=True,
-        )
-        api_resource = v1_resource.add_resource("{path+}")
-        api_resource.add_cors_preflight(
-            allow_origins=aws_apigateway.Cors.ALL_ORIGINS,
-            allow_methods=aws_apigateway.Cors.ALL_METHODS,
-            max_age=Duration.hours(1),
-        )
-        api_method = api_resource.add_method(
             "ANY",
             aws_apigateway.LambdaIntegration(self.lambda_function),
             api_key_required=True,
@@ -140,13 +157,6 @@ class SimpleThreadsStack(Stack):
             throttle=[
                 aws_apigateway.ThrottlingPerMethod(
                     method=v1_method,
-                    throttle=aws_apigateway.ThrottleSettings(
-                        burst_limit=50,
-                        rate_limit=100,
-                    ),
-                ),
-                aws_apigateway.ThrottlingPerMethod(
-                    method=api_method,
                     throttle=aws_apigateway.ThrottleSettings(
                         burst_limit=50,
                         rate_limit=100,

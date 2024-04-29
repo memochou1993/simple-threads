@@ -1,11 +1,11 @@
 meta {
-  name: delete-item
+  name: root
   type: http
-  seq: 6
+  seq: 1
 }
 
-delete {
-  url: {{invoke-url}}/api/items/1
+get {
+  url: {{invoke-url}}
   body: none
   auth: none
 }

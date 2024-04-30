@@ -143,8 +143,6 @@ class SimpleThreadsStack(Stack):
         lambda_integration = aws_apigateway.LambdaIntegration(self.lambda_function)
 
         api_gateway.root.add_method("GET", lambda_integration)
-        api_gateway.root.add_resource("docs").add_method("GET", lambda_integration)
-        api_gateway.root.add_resource("openapi.json").add_method("GET", lambda_integration)
 
         proxy_resource = api_gateway.root.add_resource("{proxy+}")
         proxy_resource.add_cors_preflight(

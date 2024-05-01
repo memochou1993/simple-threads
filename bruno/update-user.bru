@@ -1,11 +1,11 @@
 meta {
-  name: update-item
+  name: update-user
   type: http
   seq: 5
 }
 
 put {
-  url: {{invoke-url}}/api/items/1
+  url: {{invoke-url}}/api/users/2b334382-c39d-4106-902b-5264241b4948
   body: json
   auth: none
 }
@@ -16,7 +16,6 @@ headers {
 
 body:json {
   {
-    "name": "Test",
-    "price": 200
+    "name": "Test"
   }
 }

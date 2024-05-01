@@ -1,7 +1,19 @@
-import os
-
-from aws_cdk import BundlingOptions, Duration, Size, Stack, aws_apigateway, aws_ec2, aws_iam, aws_lambda, aws_logs
+from aws_cdk import (
+    BundlingOptions,
+    Duration,
+    RemovalPolicy,
+    Size,
+    Stack,
+    aws_apigateway,
+    aws_dynamodb,
+    aws_ec2,
+    aws_iam,
+    aws_lambda,
+    aws_logs,
+)
 from constructs import Construct
+
+from app import config
 
 
 class SimpleThreadsStack(Stack):
@@ -9,6 +21,8 @@ class SimpleThreadsStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         self.vpc = self.create_vpc()
+        self.dynamodb_user_table = self.create_dynamodb_user_table()
+        self.dynamodb_thread_table = self.create_dynamodb_thread_table()
         self.lambda_function = self.create_lambda_function()
         self.api_gateway = self.create_api_gateway()
 
@@ -16,10 +30,53 @@ class SimpleThreadsStack(Stack):
         vpc = aws_ec2.Vpc.from_lookup(
             self,
             "SelectedVpc",
-            vpc_id=os.environ.get("AWS_VPC_ID"),
+            vpc_id=config.AWS_VPC_ID,
         )
 
         return vpc
+
+    def create_dynamodb_user_table(self):
+        dynamodb_table = aws_dynamodb.Table(
+            self,
+            "SimpleThreadsUserDynamoDBTable",
+            table_name="SimpleThreadsUsers",
+            partition_key=aws_dynamodb.Attribute(
+                name="user_id",
+                type=aws_dynamodb.AttributeType.STRING,
+            ),
+            billing_mode=aws_dynamodb.BillingMode.PAY_PER_REQUEST,
+            removal_policy=RemovalPolicy.RETAIN,
+        )
+        return dynamodb_table
+
+    def create_dynamodb_thread_table(self):
+        dynamodb_table = aws_dynamodb.Table(
+            self,
+            "SimpleThreadsThreadDynamoDBTable",
+            table_name="SimpleThreadsThreads",
+            partition_key=aws_dynamodb.Attribute(
+                name="user_id",
+                type=aws_dynamodb.AttributeType.STRING,
+            ),
+            sort_key=aws_dynamodb.Attribute(
+                name="thread_id",
+                type=aws_dynamodb.AttributeType.STRING,
+            ),
+            billing_mode=aws_dynamodb.BillingMode.PAY_PER_REQUEST,
+            removal_policy=RemovalPolicy.RETAIN,
+        )
+        dynamodb_table.add_global_secondary_index(
+            index_name="ParentThreadIndex",
+            partition_key=aws_dynamodb.Attribute(
+                name="parent_thread_id",
+                type=aws_dynamodb.AttributeType.STRING,
+            ),
+            sort_key=aws_dynamodb.Attribute(
+                name="thread_id",
+                type=aws_dynamodb.AttributeType.STRING,
+            ),
+        )
+        return dynamodb_table
 
     def create_lambda_function(self):
         lambda_role = aws_iam.Role(
@@ -84,7 +141,10 @@ class SimpleThreadsStack(Stack):
             layers=[
                 layer,
             ],
-            environment={},
+            environment={
+                "DYNAMODB_USER_TABLE_NAME": self.dynamodb_user_table.table_name,
+                "DYNAMODB_THREAD_TABLE_NAME": self.dynamodb_thread_table.table_name,
+            },
         )
 
         return lambda_function

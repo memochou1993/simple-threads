@@ -1,11 +1,11 @@
 meta {
-  name: delete-item
+  name: list-users
   type: http
-  seq: 6
+  seq: 2
 }
 
-delete {
-  url: {{invoke-url}}/api/items/1
+get {
+  url: {{invoke-url}}/api/users
   body: none
   auth: none
 }

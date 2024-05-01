@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request
-from handlers import item_handler
+from handlers import user_handler
 from mangum import Mangum
 
 app = FastAPI(root_path="/production", title="Simple Threads API")
@@ -14,5 +14,5 @@ async def root(req: Request):
     }
 
 
-app.include_router(item_handler.router, prefix="/api")
+app.include_router(user_handler.router, prefix="/api")
 handler = Mangum(app, lifespan="off")
